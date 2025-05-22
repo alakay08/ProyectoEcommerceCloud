@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self'; 
+                   script-src 'self' https://cdn.tailwindcss.com 'unsafe-inline'; 
+                   style-src 'self' https://cdn.tailwindcss.com https://fonts.googleapis.com 'unsafe-inline'; 
+                   font-src 'self' https://fonts.gstatic.com; 
+                   img-src 'self' data: https://placehold.co images:; 
+                   connect-src 'self' https://l2d9ul44f7.execute-api.us-east-1.amazonaws.com;">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Troyano Shop - E-commerce (Backend Auth)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { @apply px-3 py-2 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-200 hover:text-gray-900; }
+        .nav-link-active { @apply bg-gray-900 text-white; }
+        .product-card { @apply bg-white shadow-lg rounded-lg overflow-hidden transform transition-all hover:scale-105; }
+        .btn { @apply px-4 py-2 rounded-md font-semibold text-white shadow-md focus:outline-none focus:ring-2 focus:ring-opacity-75; }
+        .btn-primary { @apply bg-blue-600 hover:bg-blue-700 focus:ring-blue-500; }
+        .form-input { @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm; }
+        .modal { @apply fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full flex items-center justify-center z-50; }
+        .modal-content { @apply bg-white p-8 rounded-lg shadow-xl w-full max-w-md; }
+    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100">
+
+    <div id="app" class="container mx-auto px-4">
+        <nav class="bg-white shadow-md rounded-lg my-4 p-4">
+            <div class="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                <div class="relative flex items-center justify-between h-16">
+                    <div class="flex-shrink-0">
+                        <img id="logo" class="h-20 w-auto" src="images/logo.png" alt="[Logo de Troyano Shop]" onerror="this.onerror=null;this.src='https://placehold.co/150x50/000000/FFFFFF?text=Logo'; console.error('Error cargando images/logo.png.');">
+                    </div>
+                    <div class="hidden sm:block sm:ml-6">
+                        <div class="flex space-x-4">
+                            <a href="#" id="nav-home" class="nav-link nav-link-active">Inicio</a>
+                            <a href="#" id="nav-products" class="nav-link">Productos</a>
+                            <a href="#" id="nav-cart" class="nav-link">
+                                Carrito <span id="cart-count" class="ml-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="hidden sm:block sm:ml-6">
+                        <div id="auth-links" class="flex space-x-4">
+                            <a href="#" id="nav-login" class="nav-link">Iniciar Sesión</a>
+                            <a href="#" id="nav-signup" class="btn btn-primary">Crear Cuenta</a>
+                        </div>
+                        <div id="user-profile" class="hidden items-center">
+                            <span id="user-email-display" class="text-sm font-medium text-gray-700 mr-4"></span>
+                            <button id="logout-button" class="nav-link">Cerrar Sesión</button>
+                        </div>
+                    </div>
+                    <div class="sm:hidden">
+                        <button type="button" id="mobile-menu-button" class="bg-gray-800 inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white" aria-controls="mobile-menu" aria-expanded="false">
+                            <span class="sr-only">Abrir menú principal</span>
+                            <svg class="block h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" /></svg>
+                            <svg class="hidden h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <div class="sm:hidden hidden" id="mobile-menu"> <div class="px-2 pt-2 pb-3 space-y-1"> <a href="#" id="nav-home-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base">Inicio</a> <a href="#" id="nav-products-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base">Productos</a> <a href="#" id="nav-cart-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base"> Carrito <span id="cart-count-mobile" class="ml-1 bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full">0</span> </a> <div id="auth-links-mobile"> <a href="#" id="nav-login-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base">Iniciar Sesión</a> <a href="#" id="nav-signup-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base">Crear Cuenta</a> </div> <div id="user-profile-mobile" class="hidden"> <span id="user-email-display-mobile" class="text-gray-700 block px-3 py-2 rounded-md text-base"></span> <button id="logout-button-mobile" class="text-gray-700 hover:bg-gray-200 block px-3 py-2 rounded-md text-base w-full text-left">Cerrar Sesión</button> </div> </div> </div>
+        </nav>
+        <main id="page-content" class="my-8"></main>
+        <footer class="text-center text-gray-600 py-8"> <p>&copy; <span id="currentYear"></span> Troyano Shop. Derechos reservados.</p> <p>Proyecto Cloud.</p> </footer>
+    </div>
+
+    <template id="home-page-template"> <div class="text-center"> <h1 class="text-4xl font-bold text-gray-800 mb-6">Bienvenido a Troyano Shop</h1> <p class="text-lg text-gray-600 mb-8">Exclusividad y estilo, directo a tu puerta.</p> <div id="featured-products" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"></div> </div> </template>
+    <template id="products-page-template"> <div> <h1 class="text-3xl font-bold text-gray-800 mb-6">Todos Nuestros Productos</h1> <div id="all-products" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"></div> </div> </template>
+    <template id="product-card-template"> <div class="product-card"> <img src="" alt="Producto" class="w-full h-64 object-cover product-image" onerror="this.onerror=null;this.src='https://placehold.co/400x300/CCCCCC/FFFFFF?text=Producto'; console.error('Error cargando imagen de producto:', this.src);"> <div class="p-4"> <h3 class="text-lg font-semibold product-name">Nombre</h3> <p class="text-gray-600 product-description text-sm">Desc.</p> <p class="text-xl font-bold text-gray-800 my-2 product-price">$0.00</p> <button class="btn btn-primary w-full add-to-cart-button">Añadir</button> </div> </div> </template>
+    <template id="cart-page-template"> <div> <h1 class="text-3xl font-bold text-gray-800 mb-6">Tu Carrito</h1> <div id="cart-items-container"></div> <div id="cart-empty" class="text-center text-gray-500 py-8 hidden"><p class="text-xl">Carrito vacío.</p><button class="btn btn-primary mt-4" id="cart-back-to-products">Ver Productos</button></div> <div id="cart-summary" class="mt-8 p-6 bg-white shadow-md rounded-lg hidden"> <h2 class="text-2xl font-semibold mb-4">Resumen</h2> <div class="flex justify-between mb-2"><span>Subtotal:</span><span id="cart-subtotal">$0.00</span></div> <div class="flex justify-between mb-2"><span>Envío:</span><span>Gratis</span></div> <hr class="my-2"> <div class="flex justify-between font-bold text-lg"><span>Total:</span><span id="cart-total">$0.00</span></div> <button id="checkout-button" class="btn btn-primary w-full mt-6">Pagar</button> </div> </div> </template>
+    <template id="cart-item-template"> <div class="flex items-center justify-between bg-white p-4 rounded-lg shadow mb-4 cart-item"> <div class="flex items-center"><img src="" alt="Item" class="w-20 h-20 object-cover rounded mr-4 cart-item-image" onerror="this.onerror=null;this.src='https://placehold.co/80x80/CCCCCC/FFFFFF?text=Item';"> <div class="flex-grow"><h4 class="font-semibold cart-item-name">Nombre</h4><p class="text-sm text-gray-600 cart-item-price">$0.00</p></div> </div> <div class="flex items-center"><input type="number" value="1" min="1" class="form-input w-16 text-center cart-item-quantity mr-2"><button class="text-red-500 hover:text-red-700 remove-from-cart-button p-1"><svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg></button></div> </div> </template>
+    <template id="login-page-template"> <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl"><h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Iniciar Sesión</h1><form id="login-form"><div class="mb-4"><label for="login-email" class="block text-sm">Correo</label><input type="email" id="login-email" required class="form-input"></div><div class="mb-6"><label for="login-password" class="block text-sm">Contraseña</label><input type="password" id="login-password" required class="form-input"></div><button type="submit" class="btn btn-primary w-full">Ingresar</button><p class="text-sm text-center mt-4">¿No tienes cuenta? <a href="#" id="go-to-signup" class="font-medium text-blue-600">Regístrate</a></p></form></div> </template>
+    <template id="signup-page-template"> <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl"><h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Crear Cuenta</h1><form id="signup-form"><div class="mb-4"><label for="signup-email" class="block text-sm">Correo</label><input type="email" id="signup-email" required class="form-input"></div><div class="mb-4"><label for="signup-password" class="block text-sm">Contraseña</label><input type="password" id="signup-password" required class="form-input" placeholder="Mín. 8 caracteres..."></div><div class="mb-6"><label for="signup-confirm-password" class="block text-sm">Confirmar</label><input type="password" id="signup-confirm-password" required class="form-input"></div><button type="submit" class="btn btn-primary w-full">Registrarse</button><p class="text-sm text-center mt-4">¿Ya tienes cuenta? <a href="#" id="go-to-login" class="font-medium text-blue-600">Inicia sesión</a></p></form></div> </template>
+    <template id="verification-page-template"> <div class="max-w-md mx-auto bg-white p-8 rounded-lg shadow-xl"><h1 class="text-2xl font-bold text-center text-gray-800 mb-6">Verificar Cuenta</h1><p class="text-center mb-4">Código enviado a <strong id="verification-email-display-vf"></strong>.</p><form id="verification-form"><input type="hidden" id="verification-username-vf"><div class="mb-4"><label for="verification-code-vf" class="block text-sm">Código</label><input type="text" id="verification-code-vf" required class="form-input"></div><button type="submit" class="btn btn-primary w-full">Verificar</button></form></div> </template>
+
+    <div id="message-modal" class="modal hidden"><div class="modal-content text-center"><h3 id="message-modal-title" class="text-xl font-semibold mb-4">Msg</h3><p id="message-modal-text" class="mb-6"></p><button id="message-modal-close" class="btn btn-primary">Cerrar</button></div></div>
+
+    <script>
+        console.log("Script principal iniciado (Backend Auth). API Gateway URL configurada.");
+
+        const API_BASE_URL = "https://l2d9ul44f7.execute-api.us-east-1.amazonaws.com/dev"; 
+        const SIGNUP_ENDPOINT = `${API_BASE_URL}/registro`;
+        const CONFIRM_ENDPOINT = `${API_BASE_URL}/confirmar`;
+        const LOGIN_ENDPOINT = `${API_BASE_URL}/login`;
+
+        const products = [ 
+            { id: 1, name: "iPhone 16 Pro", price: 25999.00, image: "images/iphone16.jpeg", description: "Tecnología móvil superior.", stock: 5 },
+            { id: 2, name: "Camiseta Hasbulla King", price: 599.00, image: "images/camiseta.jpeg", description: "El verdadero rey.", stock: 15 },
+            { id: 3, name: "Gafas de Sol Clásicas", price: 489.00, image: "images/gafas de sol.jpeg", description: "Protección UV400.", stock: 20 },
+            { id: 4, name: "Gorra Deportiva Azul", price: 459.00, image: "images/gorra.jpeg", description: "Look casual y deportivo.", stock: 25 },
+            { id: 5, name: "Calzones de Shrek", price: 299.00, image: "images/calzones.png", description: "Comodidad y estilo ogro.", stock: 10 },
+            { id: 6, name: "Pollo de Hule Chillón", price: 198.00, image: "images/pollo chillon hule.jpeg", description: "Diversión garantizada.", stock: 30 },
+            { id: 7, name: "Reloj Inteligente Deportivo", price: 3999.00, image: "images/reloj.png", description: "Monitorea tu actividad.", stock: 12 },
+            { id: 8, name: "Sudadera Negra Oversized", price: 989.00, image: "images/sudadera.jpeg", description: "Comodidad y estilo urbano.", stock: 18 },
+            { id: 9, name: "Zapatos Deportivos Clásicos", price: 1495.00, image: "images/zapatos.jpeg", description: "Estilo y confort icónico.", stock: 22 }
+        ];
+        const logoImageFilename = "images/logo.png"; 
+        
+        let currentPage = 'home', cart = [];
+        let pageContent, cartCountSpan, cartCountMobileSpan, authLinks, userProfile, userEmailDisplay,
+            authLinksMobile, userProfileMobile, userEmailDisplayMobile, mobileMenuButton, mobileMenu;
+
+        function showMessageModal(title, text, onCloseCallback = null) { const modal=document.getElementById('message-modal'),mt=document.getElementById('message-modal-title'),mb=document.getElementById('message-modal-text'); if(!modal||!mt||!mb){console.error("Modal X.");alert(`${title}: ${text}`);if(onCloseCallback)onCloseCallback();return;} mt.textContent=title;mb.textContent=text;window.modalCloseCallback=onCloseCallback;modal.classList.remove('hidden');};
+        function showLoading(message="Cargando..."){console.log(`Loading: ${message}`);showMessageModal("Procesando",message);};
+        function hideLoading(){console.log("Hide load.");const m=document.getElementById('message-modal'),t=document.getElementById('message-modal-title');if(m&&t&&t.textContent==="Procesando"){m.classList.add('hidden');if(window.modalCloseCallback){window.modalCloseCallback();window.modalCloseCallback=null;}}};
+        function setActiveNavLink(pageName) { document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('nav-link-active')); const d = document.getElementById(`nav-${pageName}`); if(d)d.classList.add('nav-link-active'); const m = document.getElementById(`nav-${pageName}-mobile`); if(m)m.classList.add('nav-link-active');};
+        function createProductCard(product) { const t = document.getElementById('product-card-template'); if (!t) { console.error("#product-card-template X"); return document.createElement('div'); } const c = t.content.cloneNode(true).firstElementChild; const i = c.querySelector('.product-image'); if (i) { i.src = product.image; i.alt = `[${product.name}]`; } const n = c.querySelector('.product-name'); if (n) n.textContent = product.name; const d = c.querySelector('.product-description'); if (d) d.textContent = product.description.substring(0,50) + "..."; const p = c.querySelector('.product-price'); if (p) p.textContent = `$${product.price.toFixed(2)}`; const b = c.querySelector('.add-to-cart-button'); if (b) { b.dataset.productId = product.id; b.addEventListener('click', () => addToCart(product.id)); } return c; };
+        function renderHomePageContent() { console.log("R HomePage"); const c = document.getElementById('featured-products'); if (!c) { console.error("#featured-products X"); return; } c.innerHTML = ''; const f = products.slice(0, 3); if (f.length === 0) console.warn("No featured P."); f.forEach(p => c.appendChild(createProductCard(p))); console.log(`${f.length} featured P rendered.`); };
+        function renderProductsPageContent() { console.log("R ProductsPage"); const c = document.getElementById('all-products'); if (!c) { console.error("#all-products X"); return; } c.innerHTML = ''; if (products.length === 0) console.warn("No P."); products.forEach(p => c.appendChild(createProductCard(p))); console.log(`${products.length} P rendered.`); };
+        function createCartItemElement(product, quantity) { const t = document.getElementById('cart-item-template'); if (!t) { console.error("#cart-item-template X"); return document.createElement('div');} const e = t.content.cloneNode(true).firstElementChild; e.dataset.productId = product.id; const i = e.querySelector('.cart-item-image'); if(i) { i.src = product.image; i.alt = `[${product.name}]`;} const n = e.querySelector('.cart-item-name'); if(n) n.textContent = product.name; const p = e.querySelector('.cart-item-price'); if(p) p.textContent = `$${product.price.toFixed(2)}`; const q = e.querySelector('.cart-item-quantity'); if (q) { q.value = quantity; q.addEventListener('change', (ev) => updateCartItemQuantity(product.id, parseInt(ev.target.value)));} const r = e.querySelector('.remove-from-cart-button'); if (r) r.addEventListener('click', () => removeFromCart(product.id)); return e; };
+        function updateCartSummary() { const s = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0); const se = document.getElementById('cart-subtotal'); const te = document.getElementById('cart-total'); if(se) se.textContent = `$${s.toFixed(2)}`; if(te) te.textContent = `$${s.toFixed(2)}`;};
+        function renderCartPageContent() { console.log("R CartPage"); const ic = document.getElementById('cart-items-container'); const ed = document.getElementById('cart-empty'); const sd = document.getElementById('cart-summary'); if (!ic || !ed || !sd) { console.error("Cart elements X."); return; } ic.innerHTML = ''; if (cart.length === 0) { ed.classList.remove('hidden'); sd.classList.add('hidden'); } else { ed.classList.add('hidden'); sd.classList.remove('hidden'); cart.forEach(item => ic.appendChild(createCartItemElement(item.product, item.quantity))); updateCartSummary(); } const b = document.getElementById('cart-back-to-products'); if(b) b.addEventListener('click', () => navigateTo('products')); const cb = document.getElementById('checkout-button'); if(cb) cb.addEventListener('click', handleCheckout); };
+        function addToCart(productId) { const p = products.find(pr => pr.id === productId); if (!p) { console.error(`P ID ${productId} X.`); return; } const ei = cart.find(item => item.product.id === productId); if (ei) ei.quantity++; else cart.push({ product: p, quantity: 1 }); updateCartCount(); showMessageModal("Ok", `${p.name} added.`);};
+        function removeFromCart(productId) { cart = cart.filter(item => item.product.id !== productId); updateCartCount(); if (currentPage === 'cart') renderPage('cart');};
+        function updateCartItemQuantity(productId, quantity) { const iic = cart.find(item => item.product.id === productId); if (iic) { if (quantity > 0) iic.quantity = quantity; else cart = cart.filter(item => item.product.id !== productId); } updateCartCount(); if (currentPage === 'cart') renderCartPageContent();};
+        function updateCartCount() { const ti = cart.reduce((sum, item) => sum + item.quantity, 0); if(cartCountSpan) cartCountSpan.textContent = ti; if(cartCountMobileSpan) cartCountMobileSpan.textContent = ti;};
+        function handleCheckout() { if (cart.length === 0) { showMessageModal("Empty", "No P."); return; } showMessageModal("Payment", "Thanks! (Sim).", () => { cart = []; updateCartCount(); navigateTo('home'); }); };
+        
+        function setupLoginPage() {
+            console.log("Setup LoginPage");
+            const form = document.getElementById('login-form');
+            if (form) form.addEventListener('submit', handleLogin);
+            const link = document.getElementById('go-to-signup');
+            if (link) link.addEventListener('click', (e) => { e.preventDefault(); navigateTo('signup'); });
+        }
+        function setupSignupPage() {
+            console.log("Setup SignupPage");
+            const form = document.getElementById('signup-form');
+            if (form) form.addEventListener('submit', handleSignUp);
+            const link = document.getElementById('go-to-login');
+            if (link) link.addEventListener('click', (e) => { e.preventDefault(); navigateTo('login'); });
+        }
+        function setupVerificationPage(emailForVerification) {
+            console.log(`Setup VerPage for ${emailForVerification}`);
+            const form = document.getElementById('verification-form');
+            if (form) {
+                const emailDisplayVf = document.getElementById('verification-email-display-vf');
+                const usernameInputVf = document.getElementById('verification-username-vf');
+                if(emailDisplayVf) emailDisplayVf.textContent = emailForVerification;
+                if(usernameInputVf) usernameInputVf.value = emailForVerification;
+                form.addEventListener('submit', handleVerification);
+            }
+            const resendCodeLink = document.getElementById('resend-code');
+            if(resendCodeLink) resendCodeLink.addEventListener('click', (e) => { 
+                e.preventDefault(); 
+                showMessageModal("Función no disponible", "La opción de reenviar código no está implementada en este ejemplo.");
+            });
+        }
+
+        async function handleSignUp(event) {
+            event.preventDefault();
+            // Usar getElementById para obtener los valores
+            const email = document.getElementById('signup-email').value;
+            const password = document.getElementById('signup-password').value;
+            const confirmPassword = document.getElementById('signup-confirm-password').value;
+
+            if (password !== confirmPassword) { showMessageModal("Error", "Las contraseñas no coinciden."); return; }
+            if (password.length < 8) { showMessageModal("Error", "La contraseña es muy corta (mínimo 8 caracteres)."); return; }
+            showLoading("Registrando...");
+            try {
+                if (API_BASE_URL === "TU_API_GATEWAY_ENDPOINT_BASE" || !API_BASE_URL) { throw new Error("API Gateway endpoint no configurado en el script."); }
+                const response = await fetch(SIGNUP_ENDPOINT, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                hideLoading();
+                if (response.ok && data.success) {
+                    showMessageModal("Registro Exitoso", data.message || "Se ha enviado un código de verificación a tu correo.");
+                    navigateTo('verification', email); 
+                } else {
+                    showMessageModal("Error de Registro", data.message || "No se pudo completar el registro.");
+                }
+            } catch (error) {
+                hideLoading(); console.error('Error en fetch de registro:', error);
+                showMessageModal("Error de Conexión", `No se pudo conectar al servidor de registro. ${error.message}`);
+            }
+        }
+
+        async function handleVerification(event) {
+            event.preventDefault();
+            // Usar getElementById para obtener los valores
+            const email = document.getElementById('verification-username-vf').value; 
+            const code = document.getElementById('verification-code-vf').value;
+
+            if (!email || !code) { showMessageModal("Error", "Email y código son requeridos."); return; }
+            showLoading("Verificando código...");
+            try {
+                if (API_BASE_URL === "TU_API_GATEWAY_ENDPOINT_BASE" || !API_BASE_URL) { throw new Error("API Gateway endpoint no configurado en el script."); }
+                const response = await fetch(CONFIRM_ENDPOINT, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, code })
+                });
+                const data = await response.json();
+                hideLoading();
+                if (response.ok && data.success) {
+                    showMessageModal("Éxito", "¡Cuenta verificada! Por favor, inicia sesión.", () => navigateTo('login'));
+                } else {
+                    showMessageModal("Error de Verificación", data.message || "Código incorrecto o expirado.");
+                }
+            } catch (error) {
+                hideLoading(); console.error('Error en fetch de verificación:', error);
+                showMessageModal("Error de Conexión", `No se pudo conectar al servidor de verificación. ${error.message}`);
+            }
+        }
+
+        async function handleLogin(event) {
+            event.preventDefault();
+            // Usar getElementById para obtener los valores
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+
+            showLoading("Iniciando sesión...");
+            try {
+                if (API_BASE_URL === "TU_API_GATEWAY_ENDPOINT_BASE" || !API_BASE_URL) { throw new Error("API Gateway endpoint no configurado en el script."); }
+                const response = await fetch(LOGIN_ENDPOINT, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await response.json();
+                hideLoading();
+                if (response.ok && data.success && data.token) {
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('userEmail', email); 
+                    updateAuthUI();
+                    navigateTo('home');
+                    showMessageModal("Éxito", "¡Has iniciado sesión!");
+                } else if (data.needsConfirmation) {
+                     showMessageModal("Verificación Requerida", "Tu cuenta no ha sido confirmada.", () => navigateTo('verification', email));
+                } else {
+                    showMessageModal("Error de Inicio de Sesión", data.message || "Credenciales incorrectas o error del servidor.");
+                }
+            } catch (error) {
+                hideLoading(); console.error('Error en fetch de login:', error);
+                showMessageModal("Error de Conexión", `No se pudo conectar al servidor de inicio de sesión. ${error.message}`);
+            }
+        }
+
+        function handleLogout() {
+            console.log("Cerrando sesión...");
+            localStorage.removeItem('authToken');
+            localStorage.removeItem('userEmail');
+            updateAuthUI();
+            navigateTo('home');
+            showMessageModal("Sesión Cerrada", "Has cerrado sesión exitosamente.");
+        }
+
+        function updateAuthUI() {
+            const token = localStorage.getItem('authToken');
+            const userEmail = localStorage.getItem('userEmail');
+            const isLoggedIn = !!token;
+
+            if (authLinks) authLinks.classList.toggle('hidden', isLoggedIn);
+            if (userProfile) { userProfile.classList.toggle('hidden', !isLoggedIn); userProfile.classList.toggle('flex', isLoggedIn); }
+            if (userEmailDisplay && isLoggedIn) userEmailDisplay.textContent = userEmail;
+            
+            if (authLinksMobile) authLinksMobile.classList.toggle('hidden', isLoggedIn);
+            if (userProfileMobile) userProfileMobile.classList.toggle('hidden', !isLoggedIn);
+            if (userEmailDisplayMobile && isLoggedIn) userEmailDisplayMobile.textContent = userEmail;
+            console.log("UI de autenticación actualizada. Logueado:", isLoggedIn);
+        }
+        
+        function renderPage(pageName, params = {}) {
+            console.log(`Render page: ${pageName}`, params); 
+            if (!pageContent) { console.error("#page-content X."); return; } 
+            pageContent.innerHTML = ''; 
+            setActiveNavLink(pageName); 
+            let tid = `${pageName}-page-template`; 
+            const t = document.getElementById(tid);
+            if (t) { 
+                const c = t.content.cloneNode(true); 
+                pageContent.appendChild(c); 
+                console.log(`Template ${tid} cloned.`); 
+                if (pageName === 'home') renderHomePageContent(); 
+                else if (pageName === 'products') renderProductsPageContent(); 
+                else if (pageName === 'cart') renderCartPageContent(); 
+                else if (pageName === 'login') setupLoginPage(); 
+                else if (pageName === 'signup') setupSignupPage(); 
+                else if (pageName === 'verification') setupVerificationPage(params); // params aquí es el email
+            } else { 
+                pageContent.innerHTML = `<p class="text-red-500">Err: Template '${tid}' X.</p>`; 
+                console.error(`Template X: ${tid}`); 
+            } 
+            currentPage = pageName; 
+            window.scrollTo(0, 0);
+        }
+        function navigateTo(pageName, params = {}) { console.log(`Nav to: ${pageName}`); renderPage(pageName, params); }
+        
+        function startApp() {
+            console.log("DOM completamente cargado. Iniciando la aplicación...");
+            pageContent = document.getElementById('page-content');
+            cartCountSpan = document.getElementById('cart-count');
+            cartCountMobileSpan = document.getElementById('cart-count-mobile');
+            authLinks = document.getElementById('auth-links');
+            userProfile = document.getElementById('user-profile');
+            userEmailDisplay = document.getElementById('user-email-display'); 
+            authLinksMobile = document.getElementById('auth-links-mobile');
+            userProfileMobile = document.getElementById('user-profile-mobile');
+            userEmailDisplayMobile = document.getElementById('user-email-display-mobile'); 
+            mobileMenuButton = document.getElementById('mobile-menu-button');
+            mobileMenu = document.getElementById('mobile-menu');
+            
+            if(!pageContent) { console.error("#page-content not found."); return; }
+            
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            const logoEl = document.getElementById('logo');
+            if (logoEl) logoEl.src = logoImageFilename; else console.error("#logo not found.");
+            
+            const closeButton = document.getElementById('message-modal-close');
+            if (closeButton) {
+                closeButton.addEventListener('click', () => {
+                    const modal = document.getElementById('message-modal');
+                    if(modal) modal.classList.add('hidden');
+                    if (window.modalCloseCallback) { window.modalCloseCallback(); window.modalCloseCallback = null; }
+                });
+            }
+
+            setupNavListeners(); 
+            updateAuthUI(); 
+            navigateTo('home');  
+            console.log("Aplicación inicializada.");
+        }
+
+        function setupNavListeners() {
+            console.log("Setting up navigation listeners.");
+            document.getElementById('nav-home')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('home'); });
+            document.getElementById('nav-products')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('products'); });
+            document.getElementById('nav-cart')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('cart'); });
+            document.getElementById('nav-login')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('login'); });
+            document.getElementById('nav-signup')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('signup'); });
+            document.getElementById('logout-button')?.addEventListener('click', handleLogout);
+            document.getElementById('nav-home-mobile')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('home'); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            document.getElementById('nav-products-mobile')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('products'); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            document.getElementById('nav-cart-mobile')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('cart'); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            document.getElementById('nav-login-mobile')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('login'); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            document.getElementById('nav-signup-mobile')?.addEventListener('click', (e) => { e.preventDefault(); navigateTo('signup'); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            document.getElementById('logout-button-mobile')?.addEventListener('click', () => {handleLogout(); if(mobileMenu) mobileMenu.classList.add('hidden'); });
+            if (mobileMenuButton && mobileMenu) {
+                mobileMenuButton.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                    mobileMenuButton.setAttribute('aria-expanded', !mobileMenu.classList.contains('hidden'));
+                    mobileMenuButton.querySelectorAll('svg').forEach(svg => svg.classList.toggle('hidden'));
+                });
+            }
+        }
+        document.addEventListener('DOMContentLoaded', startApp);
+    </script>
+</body>
+</html>
